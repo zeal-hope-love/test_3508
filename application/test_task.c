@@ -21,6 +21,13 @@
 #include "bsp_buzzer.h"
 #include "detect_task.h"
 
+//测试3508
+#include "CAN_receive.h"
+
+#define OPEN_LOOP_ENABLE   0        // 总开关：1=开环调试，0=恢复原功能
+#define OPEN_LOOP_CURRENT  100     // 电机1开环电流，±16384 对应 ±20A
+
+
 static void buzzer_warn_error(uint8_t num);
 
 const error_t *error_list_test_local;
@@ -39,12 +46,18 @@ const error_t *error_list_test_local;
   */
 void test_task(void const * argument)
 {
+
+
     static uint8_t error, last_error;
     static uint8_t error_num;
     error_list_test_local = get_error_list_point();
 
     while(1)
     {
+        #if OPEN_LOOP_ENABLE
+            CAN_cmd_chassis(OPEN_LOOP_CURRENT, 0, 0, 0);
+        #endif
+
         error = 0;
 
         //find error
@@ -68,7 +81,9 @@ void test_task(void const * argument)
         //有错误
         if(error)
         {
-            buzzer_warn_error(error_num+1);
+            #if 0   // 调试期间临时关闭蜂鸣报警
+                buzzer_warn_error(error_num+1);
+            #endif
         }
 
         last_error = error;
